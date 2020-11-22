@@ -12,9 +12,17 @@ final_df = yf.download(TICKER_LIST, auto_adjust=False)
 
 # 2. Saving market data with this format yyy-mm-dd_market_data.pckl
 now_yyyymmdd = datetime.now().strftime(r"%Y-%m-%d")
+
+# 3. 
+# df.fillna(method="ffill").to_pickle("data/2020-11-17_market_data_forward_filled.pckl") 
+all_dates = [start_date+timedelta(days=i) for i in range((end_date-start_date).days+1)]
+all_dates = pd.DataFrame(all_dates, columns=["Date"])
+
 final_df.to_pickle(
     path_join(
         DATA_DIR,
         f"{now_yyyymmdd}_market_data.pckl"
     )
 )
+
+# TODO: Make it so it updates the data everyday

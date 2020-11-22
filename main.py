@@ -1,6 +1,6 @@
-from os import POSIX_FADV_NORMAL, name
 from threading import main_thread
 import dash
+from dash.dash import no_update
 import dash_bootstrap_components as dbc
 from dash_core_components.RadioItems import RadioItems
 import dash_html_components as html
@@ -9,7 +9,7 @@ import plotly.express as px
 from dash.dependencies import Input, Output, State
 import pandas as pd
 from ipdb import set_trace as st
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 
 from Templates.time_slider_graph import create_time_slider_graph
@@ -22,11 +22,33 @@ TICKER_NAMES_DICT = {
     )
 }
 
+
 # Read market data
 df = pd.read_pickle(r"data/2020-11-17_market_data_forward_filled.pckl")
-
+df = df
 # Create a primary chart so it is not empty
 fig = create_time_slider_graph(df.loc[:, "Adj Close"].loc[:, ["AAPL"]])
+
+###### Date data structures:
+
+
+# values_list = df.index.to_list()
+values_list = df.index.to_series().dt.strftime(r"%Y-%m-%d").reset_index(drop=True)
+## Year marks for all of the year-months (which won't fit)
+# temp_df = df.index.to_frame().reset_index(drop=True).reset_index()
+# temp_df["Date"] = temp_df["Date"].dt.strftime(r"%Y")
+# reverse_marks_dict = temp_df.groupby("Date").first().to_dict()["index"]
+# marks_dict = {v: k for k, v in reverse_marks_dict.items()}
+
+# all_years = df.index.to_series().dt.strftime(r"%Y").unique()
+# year_5 = [year for year in all_years if int(year)%5==0]
+# marks_dict = dict(zip(list(range(0, 14840, 1142)), year_5))
+temp_df = df.index.to_series().dt.strftime(r"%Y").reset_index(drop=True).reset_index()
+temp_df["Date"] = temp_df["Date"].astype(int)
+reverse_marks_dict = temp_df[temp_df["Date"] % 5 == 0].groupby("Date").first().to_dict()["index"]
+marks_dict = {v: str(k) for k, v in reverse_marks_dict.items()}
+# st()
+######
 
 app = dash.Dash(
     __name__,
@@ -54,114 +76,185 @@ app.layout = dbc.Container(
                         multi=True
                     ),
                     width=12
-                )
+                ),
+                style={"margin-bottom": "20px"}
             ),
-            dbc.Row(
+
+            dbc.CardDeck(
                 [
-                    dbc.Col(
-                        dcc.DatePickerRange(
-                            start_date=date(2018, 1, 1),
-                            end_date=date(2019, 1, 1),
-                            id="date_range",
-                            display_format='DD/MM/YYYY',
-                        ),
-                        width=3,
-                    ),
-                    dbc.Col(
-                        dbc.RadioItems(
-                            options=[
-                                {'label': 'All start from 100', 'value': '100'},
-                                {'label': 'All have their own trend', 'value': 'normal'},
-                            ],
-                            value='normal',
-                            id="radio_100"
-                        ),
-                        width=3
-                    ),
-                    dbc.Col(
-                        dbc.RadioItems(
-                            options=[
-                                {'label': 'Adjusted prices', 'value': 'yes'},
-                                {'label': 'Not adjusted prices', 'value': 'no'},
-                            ],
-                            value='no',
-                            id="radio_adjdusted"
-                        ),
-                        width=3
-                    ),
-                    dbc.Col(
-                        [
-                            dbc.Row(
-                                html.P(
-                                    "Get N highest performing stocks between certain dates"
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                html.H3("Visualization Tools", style={
+                                    "text-align": "center",
+                                    "margin-bottom": "20px"
+                                    }
+                                ),
+                                dbc.Row(
+                                    [
+                                        dbc.Col(
+                                            [
+                                                html.H4("Date Range", style={"text-align": "center"}),
+                                                dcc.DatePickerRange(
+                                                    start_date=date(2018, 1, 1),
+                                                    end_date=date(2019, 1, 1),
+                                                    id="date_range",
+                                                    display_format='DD/MM/YYYY',
+                                                ),
+                                            ],
+                                            width=6,
+                                        ),
+                                        dbc.Col(
+                                            [
+                                                html.H4("100/Normal", style={"text-align": "center"}),
+                                                dbc.RadioItems(
+                                                    options=[
+                                                        {'label': 'All start from 100', 'value': '100'},
+                                                        {'label': 'All have their own trend', 'value': 'normal'},
+                                                    ],
+                                                    value='normal',
+                                                    id="radio_100"
+                                                ),
+                                            ],
+                                            width=6,
+                                        )
+                                    ]
+                                ),
+                                dbc.Row(
+                                    [
+                                        dbc.Col(
+                                            [
+                                                html.H4("Adjust/Not adjust", style={"text-align": "center"}),
+                                                dbc.RadioItems(
+                                                    options=[
+                                                        {'label': 'Adjusted prices', 'value': 'yes'},
+                                                        {'label': 'Not adjusted prices', 'value': 'no'},
+                                                    ],
+                                                    value='no',
+                                                    id="radio_adjdusted"
+                                                )
+                                            ],
+                                            width=6,
+                                        ),
+                                        dbc.Col(
+                                            # dcc.DatePickerRange(
+                                            #     start_date=date(2018, 1, 1),
+                                            #     end_date=date(2019, 1, 1),
+                                            #     id="s4",
+                                            #     display_format='DD/MM/YYYY',
+                                            # ),
+                                            width=6,
+                                        )
+                                    ],
+                                    style={"margin-top": "20px"}
                                 )
-                            ),
-                            dbc.Row(
-                                dbc.Input(type="number", id="N_input", min=1, step=1, value=1),
-                            ),
-                            dbc.Row(
-                                dbc.Button(children="Get", id="get_best_btn", color="primary"),
-                            ),
-                        ]
-                    )
+                            ]
+                        )
+                    ),
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                html.H3("Get best N stocks", style={
+                                    "text-align": "center",
+                                    "margin-bottom": "20px"
+                                    }
+                                ),
+                                dbc.Row(
+                                    [
+                                        dbc.Col(
+                                            [
+                                                html.H4("search on Adjusted/Not adjusted", style={"text-align": "center"}),
+                                                dbc.RadioItems(
+                                                    options=[
+                                                        {'label': 'Adjusted prices', 'value': 'yes'},
+                                                        {'label': 'Not adjusted prices', 'value': 'no'},
+                                                    ],
+                                                    value='no',
+                                                    id="radio_adjdusted_get_best"
+                                                )
+                                            ],
+                                            width=6,
+                                        ),
+                                        dbc.Col(
+                                            [
+                                                html.H4("Number of best stocks to get", style={"text-align": "center"}),
+                                                dbc.Input(type="number", id="N_input", min=1, step=1, value=1),
+                                            ],
+                                            width=6,
+                                        )
+                                    ],
+                                    style={"margin-top": "20px"}
+                                ),
+                                dbc.Row(
+                                    dbc.Col(
+                                        [
+                                            dcc.DatePickerRange(
+                                                start_date=date(2018, 1, 1),
+                                                end_date=date(2019, 1, 1),
+                                                id="d1",
+                                                display_format='DD/MM/YYYY',
+                                            ),
+                                            # dcc.RangeSlider(
+                                            #     id='non-linear-range-slider',
+                                            #     # marks={i: '{}'.format(10 ** i) for i in range(4)},
+                                            #     min=1,
+                                            #     max=20,
+                                            #     value=[3, 10],
+                                            #     dots=False,
+                                            #     step=0.1,
+                                            #     # step=timedelta(days=1),
+                                            #     marks={
+                                            #         1: "1",
+                                            #         5: "5",
+                                            #         10: "10",
+                                            #         15: "15",
+                                            #         20: "20"
+                                            #     },
+                                            #     updatemode='drag'
+                                            # ),
+                                            dcc.RangeSlider(
+                                                id='date_range_slider',
+                                                # marks={i: '{}'.format(10 ** i) for i in range(4)},
+                                                min=0,
+                                                max=len(values_list),
+                                                value=[0, len(values_list)-1],
+                                                dots=False,
+                                                step=1,
+                                                # step=timedelta(days=1),
+                                                marks=marks_dict,
+                                                # marks={
+                                                #     1: "1-1-1",
+                                                #     5: "5",
+                                                #     10: "10",
+                                                #     15: "11s5",
+                                                #     20: "20"
+                                                # },
+                                                updatemode='drag'
+                                            ),
+                                        ],
+                                        width=12,
+                                    ),
+                                    # style={"margin-top": "20px"},
+                                    justify="center"
+                                ),
+                                dbc.Row(
+                                    dbc.Col(
+                                        [
+                                            dbc.Button(children="Get", id="get_best_btn", color="primary", block=True),
+                                        ],
+                                        width=6,
+                                        id={"as": "asd", "ss": "xx"}
+
+                                    ),
+                                    style={"margin-top": "20px"},
+                                    justify="center"
+                                )
+                            ]
+                        )
+                    ),
                 ]
-            ),
-        
-        
-
-
-            # dbc.CardDeck(
-            #     [
-            #         dbc.Card(
-            #             dbc.CardBody(
-            #                 [
-            #                     dbc.Row(
-            #                         [
-            #                             dbc.Col(
-            #                                 dcc.DatePickerRange(
-            #                                     start_date=date(2018, 1, 1),
-            #                                     end_date=date(2019, 1, 1),
-            #                                     id="s1",
-            #                                     display_format='DD/MM/YYYY',
-            #                                 ),
-            #                             width=6,
-            #                             ),
-            #                             dbc.Col(
-            #                                 dcc.DatePickerRange(
-            #                                     start_date=date(2018, 1, 1),
-            #                                     end_date=date(2019, 1, 1),
-            #                                     id="s2",
-            #                                     display_format='DD/MM/YYYY',
-            #                                 ),
-            #                             width=6,
-            #                             )
-            #                         ]
-            #                     )
-            #                 ]
-            #             )
-            #         ),
-            #         dbc.Card(
-            #             dbc.CardBody(
-            #                 [
-            #                     html.H5("Card 2", className="card-title"),
-            #                     html.P(
-            #                         "This card has some text content.",
-            #                         className="card-text",
-            #                     ),
-            #                     dbc.Button(
-            #                         "Click here", color="warning", className="mt-auto"
-            #                     ),
-            #                 ]
-            #             )
-            #         ),
-            #     ]
-            # )
-
-
+            )
         ],
-
-
-
     )
 
 
@@ -230,7 +323,7 @@ def update_get_n_best_button(N):
         State(component_id="N_input", component_property="value"),
         State(component_id="date_range", component_property="start_date"),
         State(component_id="date_range", component_property="end_date"),
-        State(component_id="radio_adjdusted", component_property="value"),
+        State(component_id="radio_adjdusted_get_best", component_property="value"),
 
     ],
     prevent_initial_call=True,
@@ -242,6 +335,36 @@ def update_get_n_best_button(n_clicks, N, start_date, end_date, adjustd_or_no):
     elif adjustd_or_no == "yes":
         best_tickers = df.loc[start_date: end_date, "Adj Close"].apply(lambda x: x[-1]/x[0], axis="index").nlargest(N).index.to_list()
         return [best_tickers]
+
+
+@app.callback(
+    [
+        Output(component_id="date_range_slider", component_property="value"),
+    ],
+    [
+        Input(component_id="d1", component_property="start_date"),
+        Input(component_id="d1", component_property="end_date"),
+    ],
+)
+def digitrange_to_daterange(start_date, end_date):
+    value0 = values_list[values_list == start_date].index[0]
+    value1 = values_list[values_list == end_date].index[0]
+    return [[value0, value1]]
+
+
+@app.callback(
+    [
+        Output(component_id="d1", component_property="start_date"),
+        Output(component_id="d1", component_property="end_date"),
+    ],
+    [
+        Input(component_id="date_range_slider", component_property="value"),
+    ],
+)
+def daterange_to_digitrange(value):
+    return [values_list.iloc[value[0]], values_list.iloc[value[1]]]
+
+
 
 
 if __name__ == "__main__":
