@@ -1,6 +1,4 @@
-from threading import main_thread
 import dash
-from dash.dash import no_update
 import dash_bootstrap_components as dbc
 from dash_core_components.RadioItems import RadioItems
 import dash_html_components as html
@@ -8,7 +6,7 @@ import dash_core_components as dcc
 import plotly.express as px
 from dash.dependencies import Input, Output, State
 import pandas as pd
-from ipdb import set_trace as st
+# from ipdb import set_trace as st
 from datetime import date, datetime, timedelta
 
 
@@ -34,6 +32,8 @@ fig = create_time_slider_graph(df.loc[:, "Adj Close"].loc[:, ["AAPL"]])
 
 # values_list = df.index.to_list()
 values_list = df.index.to_series().dt.strftime(r"%Y-%m-%d").reset_index(drop=True)
+values_list = values_list.reset_index()
+# values_list = values_list.reset_index()
 ## Year marks for all of the year-months (which won't fit)
 # temp_df = df.index.to_frame().reset_index(drop=True).reset_index()
 # temp_df["Date"] = temp_df["Date"].dt.strftime(r"%Y")
@@ -188,6 +188,7 @@ app.layout = dbc.Container(
                                 dbc.Row(
                                     dbc.Col(
                                         [
+                                            html.H4("Set dates to get the best stocks in", style={"text-align": "center"}),
                                             dcc.DatePickerRange(
                                                 start_date=date(2018, 1, 1),
                                                 end_date=date(2019, 1, 1),
@@ -234,7 +235,10 @@ app.layout = dbc.Container(
                                         ],
                                         width=12,
                                     ),
-                                    # style={"margin-top": "20px"},
+                                    style={
+                                        "margin-top": "20px",
+                                        "text-align": "center"
+                                    },
                                     justify="center"
                                 ),
                                 dbc.Row(
@@ -269,8 +273,9 @@ app.layout = dbc.Container(
         Input(component_id="radio_100", component_property="value"),
         Input(component_id="radio_adjdusted", component_property="value"),
     ],
+    prevent_initial_call=True,
 )
-def update_my_graph(ticker_list, end_date, start_date, normal_or_100, adjustd_or_no):
+def update_my_graph(ticker_list, end_date, start_date, normal_or_100, adjusted_or_no):
     """
     Updates the graph on any change of 
     """
@@ -288,11 +293,12 @@ def update_my_graph(ticker_list, end_date, start_date, normal_or_100, adjustd_or
     end_date = datetime.strptime(end_date, r"%Y-%m-%d").date()
     print(ticker_list)
 
-    if adjustd_or_no == "no":
+    if adjusted_or_no == "no":
         new_df = df.loc[start_date:end_date, "Close"].loc[:, ticker_list]
-    elif adjustd_or_no == "yes":
+    elif adjusted_or_no == "yes":
         new_df = df.loc[start_date:end_date, "Adj Close"].loc[:, ticker_list]
-
+    # df.loc[start_date + timedelta(days=1):end_date, "Adj Close"].loc[:, ticker_list]
+    # st()
     if normal_or_100 == "normal":
         return [create_time_slider_graph(new_df)]
     elif normal_or_100 == "100":
@@ -321,14 +327,15 @@ def update_get_n_best_button(N):
     ],
     [
         State(component_id="N_input", component_property="value"),
-        State(component_id="date_range", component_property="start_date"),
-        State(component_id="date_range", component_property="end_date"),
+        State(component_id="d1", component_property="start_date"),
+        State(component_id="d1", component_property="end_date"),
         State(component_id="radio_adjdusted_get_best", component_property="value"),
 
     ],
     prevent_initial_call=True,
 )
 def update_get_n_best_button(n_clicks, N, start_date, end_date, adjustd_or_no):
+    # st()
     if adjustd_or_no == "no":
         best_tickers = df.loc[start_date: end_date, "Close"].apply(lambda x: x[-1]/x[0], axis="index").nlargest(N).index.to_list()
         return [best_tickers]
@@ -347,8 +354,13 @@ def update_get_n_best_button(n_clicks, N, start_date, end_date, adjustd_or_no):
     ],
 )
 def digitrange_to_daterange(start_date, end_date):
-    value0 = values_list[values_list == start_date].index[0]
-    value1 = values_list[values_list == end_date].index[0]
+    # value0 = values_list[values_list <= start_date].iloc[-1]
+    # value1 = values_list[values_list >= end_date].iloc[0]
+    # st()
+    value0 = values_list[values_list["Date"] == start_date]["index"].iloc[0]
+    value1 = values_list[values_list["Date"] == end_date]["index"].iloc[0]
+    # value0 = values_list[values_list == start_date].index[0]
+    # value1 = values_list[values_list == end_date].index[0]
     return [[value0, value1]]
 
 
@@ -362,10 +374,11 @@ def digitrange_to_daterange(start_date, end_date):
     ],
 )
 def daterange_to_digitrange(value):
-    return [values_list.iloc[value[0]], values_list.iloc[value[1]]]
-
-
+    print("1")
+    # return [values_list.iloc[value[0]], values_list.iloc[value[1]]]
+    # st()
+    return [values_list.iloc[value[0]]["Date"], values_list.iloc[value[1]]["Date"]]
 
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False, port=8080)

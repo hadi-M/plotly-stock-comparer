@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  dashboard:
+    build: ./app
+    volumes:
+      - ./app:/usr/src/app
+    ports:
+      - 8050:8050
