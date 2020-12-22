@@ -8,6 +8,7 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 # from ipdb import set_trace as st
 from datetime import date, datetime, timedelta
+import flask
 
 
 from Templates.time_slider_graph import create_time_slider_graph
@@ -49,10 +50,12 @@ reverse_marks_dict = temp_df[temp_df["Date"] % 5 == 0].groupby("Date").first().t
 marks_dict = {v: str(k) for k, v in reverse_marks_dict.items()}
 # st()
 ######
+server = flask.Flask(__name__) #
 
 app = dash.Dash(
     __name__,
-    external_stylesheets=[dbc.themes.FLATLY]
+    external_stylesheets=[dbc.themes.FLATLY],
+    server=server
     )
 
 app.layout = dbc.Container(
@@ -381,4 +384,4 @@ def daterange_to_digitrange(value):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=False, port=8080)
+    app.run_server(debug=False, host="0.0.0.0", port=8050)

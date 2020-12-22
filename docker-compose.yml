@@ -7,3 +7,5 @@ services:
       - ./app:/usr/src/app
     ports:
       - 8050:8050
+    command:
+      gunicorn main:server -b :8050

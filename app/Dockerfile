@@ -9,4 +9,10 @@ RUN python -m pip install --upgrade pip
 COPY ./requirements.txt .
 RUN pip install -r requirements.txt
 
-CMD ["python", "main.py"]
+COPY . .
+# RUN apt update
+# RUN apt install -y gunicorn
+# CMD ["python", "main.py"]
+# CMD ["ls"]
+# CMD ["gunicorn", "app.main:server", "-b", ":8050"]
+# RUN gunicorn app.main:server -b :8050

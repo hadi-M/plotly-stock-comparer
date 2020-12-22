@@ -1,0 +1,13 @@
+{
+    "AWSEBDockerrunVersion": "1",
+    "Image": {
+        "Update": "false"
+    },
+    "Ports": [
+        {
+            "ContainerPort": "8000"
+        }
+    ], 
+    "Command": "gunicorn main:server -b :8050"
+}
+  
