@@ -6,6 +6,7 @@ services:
     volumes:
       - ./app:/usr/src/app
     ports:
-      - 80:8050
+      - 8050:8050
     command:
-      gunicorn main:server -b :8050
+      # gunicorn --worker-class gevent -b :8050 main:server
+      gunicorn -b :8050 main:server
