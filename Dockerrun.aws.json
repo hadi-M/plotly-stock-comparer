@@ -5,9 +5,8 @@
     },
     "Ports": [
         {
-            "ContainerPort": "8000"
+            "ContainerPort": "8050"
         }
     ], 
     "Command": "gunicorn main:server -b :8050"
 }
-  
