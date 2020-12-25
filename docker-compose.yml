@@ -9,4 +9,4 @@ services:
       - 8050:8050
     command:
       # gunicorn --worker-class gevent -b :8050 main:server
-      gunicorn -b :8050 main:server
+      gunicorn -b :8050 --workers=1 --threads=4 main:server 

@@ -297,17 +297,28 @@ def update_my_graph(ticker_list, end_date, start_date, normal_or_100, adjusted_o
         new_df = new_df.apply(column_to_normalized, axis="index")
         return [create_time_slider_graph(new_df)]
 
+# ## Python version ## 
+# @app.callback(
+#     [
+#         Output(component_id="get_best_btn", component_property="children"),
+#     ],
+#     [
+#         Input(component_id="N_input", component_property="value"),
+#     ],
+# )
+# def update_get_n_best_button(N):
+#     return [f"Get best {N} tickers"]
 
-@app.callback(
-    [
-        Output(component_id="get_best_btn", component_property="children"),
-    ],
-    [
-        Input(component_id="N_input", component_property="value"),
-    ],
+# ## JavaScript version ## #
+app.clientside_callback(
+    """
+    function(N) {
+        return "Get best " + String(N) + " tickers js.";
+    }
+    """,
+    Output(component_id="get_best_btn", component_property="children"),
+    [Input(component_id="N_input", component_property="value")],
 )
-def update_get_n_best_button(N):
-    return [f"Get best {N} tickers"]
 
 
 @app.callback(
@@ -374,56 +385,3 @@ def daterange_to_digitrange(value):
 
 if __name__ == "__main__":
     app.run_server(debug=False, host="0.0.0.0", port=8050)
-# server = flask.Flask(__name__) #
-
-
-
-
-
-
-
-
-# app = dash.Dash(
-#     __name__,
-#     external_stylesheets=[dbc.themes.FLATLY],
-#     # server=server
-#     )
-
-# server = app.server
-
-# app.layout = dbc.Container(html.H1("hi!"))
-
-
-
-
-
-
-
-# import os
-# import dash
-# import dash_core_components as dcc
-# import dash_html_components as html
-
-# external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-
-# app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-
-# server = app.server
-
-# app.layout = html.Div([
-#     html.H2('Hello World'),
-#     dcc.Dropdown(
-#         id='dropdown',
-#         options=[{'label': i, 'value': i} for i in ['LA', 'NYC', 'MTL']],
-#         value='LA'
-#     ),
-#     html.Div(id='display-value')
-# ])
-
-# @app.callback(dash.dependencies.Output('display-value', 'children'),
-#               [dash.dependencies.Input('dropdown', 'value')])
-# def display_value(value):
-#     return 'You have selected "{}"'.format(value)
-
-# if __name__ == '__main__':
-#     app.run_server(debug=True)
