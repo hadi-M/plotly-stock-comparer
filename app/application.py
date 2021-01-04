@@ -9,7 +9,8 @@ import pandas as pd
 # from ipdb import set_trace as st
 from datetime import date, datetime, timedelta
 # import flask
-
+import os
+print("listdir():", os.listdir())
 
 from Templates.time_slider_graph import create_time_slider_graph
 
@@ -45,7 +46,7 @@ app = dash.Dash(
     # server=server
     )
 
-server = app.server
+application = app.server
 
 app.layout = dbc.Container(
         [
