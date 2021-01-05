@@ -1,3 +1,4 @@
+from logging import disable
 import dash
 import dash_bootstrap_components as dbc
 from dash_core_components.RadioItems import RadioItems
@@ -9,8 +10,8 @@ import pandas as pd
 # from ipdb import set_trace as st
 from datetime import date, datetime, timedelta
 # import flask
-import os
-print("listdir():", os.listdir())
+# import os
+# print("listdir():", os.listdir())
 
 from Templates.time_slider_graph import create_time_slider_graph
 
@@ -87,19 +88,21 @@ app.layout = dbc.Container(
                                     [
                                         dbc.Col(
                                             [
-                                                html.H4("Date Range", style={"text-align": "center"}),
-                                                dcc.DatePickerRange(
-                                                    start_date=date(2018, 1, 1),
-                                                    end_date=date(2019, 1, 1),
-                                                    id="date_range",
-                                                    display_format='DD/MM/YYYY',
-                                                ),
+                                                html.H4("Adjust/Not adjust", style={"text-align": "center"}),
+                                                dbc.RadioItems(
+                                                    options=[
+                                                        {'label': 'Adjusted prices', 'value': 'yes'},
+                                                        {'label': 'Not adjusted prices', 'value': 'no'},
+                                                    ],
+                                                    value='no',
+                                                    id="radio_adjdusted"
+                                                )
                                             ],
                                             width=6,
                                         ),
                                         dbc.Col(
                                             [
-                                                html.H4("100/Normal", style={"text-align": "center"}),
+                                                html.H4("Tickers have their own trend/Start from 100", style={"text-align": "center"}),
                                                 dbc.RadioItems(
                                                     options=[
                                                         {'label': 'All start from 100', 'value': '100'},
@@ -116,30 +119,47 @@ app.layout = dbc.Container(
                                 dbc.Row(
                                     [
                                         dbc.Col(
+
                                             [
-                                                html.H4("Adjust/Not adjust", style={"text-align": "center"}),
-                                                dbc.RadioItems(
-                                                    options=[
-                                                        {'label': 'Adjusted prices', 'value': 'yes'},
-                                                        {'label': 'Not adjusted prices', 'value': 'no'},
-                                                    ],
-                                                    value='no',
-                                                    id="radio_adjdusted"
-                                                )
+                                                html.H4("Date Range", style={"text-align": "center"}),
+                                                dcc.DatePickerRange(
+                                                    start_date=date(2018, 1, 1),
+                                                    end_date=date(2019, 1, 1),
+                                                    id="visualization_date_range",
+                                                    display_format='DD/MM/YYYY',
+                                                    disabled=True
+                                                ),
                                             ],
-                                            width=6,
-                                        ),
-                                        dbc.Col(
-                                            # dcc.DatePickerRange(
-                                            #     start_date=date(2018, 1, 1),
-                                            #     end_date=date(2019, 1, 1),
-                                            #     id="s4",
-                                            #     display_format='DD/MM/YYYY',
-                                            # ),
-                                            width=6,
+                                            width=12,
                                         )
                                     ],
-                                    style={"margin-top": "20px"}
+                                    style={
+                                        "margin-top": "20px",
+                                        "text-align": "center"
+                                    }
+                                ),
+                                dbc.Row(
+                                    dbc.Col(
+                                        dcc.RangeSlider(
+                                            id='visualization_date_range_slider',
+                                            # marks={i: '{}'.format(10 ** i) for i in range(4)},
+                                            min=0,
+                                            max=len(values_list),
+                                            value=[0, len(values_list)-1],
+                                            dots=False,
+                                            step=1,
+                                            # step=timedelta(days=1),
+                                            marks=marks_dict,
+                                            # marks={
+                                            #     1: "1-1-1",
+                                            #     5: "5",
+                                            #     10: "10",
+                                            #     15: "11s5",
+                                            #     20: "20"
+                                            # },
+                                            updatemode='drag'
+                                        ),
+                                    )
                                 )
                             ]
                         )
@@ -147,7 +167,7 @@ app.layout = dbc.Container(
                     dbc.Card(
                         dbc.CardBody(
                             [
-                                html.H3("Get best N stocks", style={
+                                html.H3("Get N highest performing stocks", style={
                                     "text-align": "center",
                                     "margin-bottom": "20px"
                                     }
@@ -187,6 +207,7 @@ app.layout = dbc.Container(
                                                 end_date=date(2019, 1, 1),
                                                 id="d1",
                                                 display_format='DD/MM/YYYY',
+                                                disabled=True
                                             ),
                                             # dcc.RangeSlider(
                                             #     id='non-linear-range-slider',
@@ -207,7 +228,7 @@ app.layout = dbc.Container(
                                             #     updatemode='drag'
                                             # ),
                                             dcc.RangeSlider(
-                                                id='date_range_slider',
+                                                id='d1_date_range_slider',
                                                 # marks={i: '{}'.format(10 ** i) for i in range(4)},
                                                 min=0,
                                                 max=len(values_list),
@@ -234,17 +255,24 @@ app.layout = dbc.Container(
                                     },
                                     justify="center"
                                 ),
-                                dbc.Row(
-                                    dbc.Col(
-                                        [
-                                            dbc.Button(children="Get", id="get_best_btn", color="primary", block=True),
-                                        ],
-                                        width=6,
-                                        id={"as": "asd", "ss": "xx"}
+                                dbc.Row([
+                                        dbc.Col(
+                                            [
+                                                dbc.Button(children="Get", id="get_best_btn", color="primary", block=True),
+                                            ],
+                                            width=6,
 
-                                    ),
+                                        ),
+                                        dbc.Col(
+                                            [
+                                                dbc.Button(children="Apply dates to graph", id="apply_dates_to_visualization", color="primary", block=True),
+                                            ],
+                                            width=6,
+
+                                        ),
+                                    ],
                                     style={"margin-top": "20px"},
-                                    justify="center"
+                                    # justify="center"
                                 )
                             ]
                         )
@@ -261,8 +289,8 @@ app.layout = dbc.Container(
     ],
     [
         Input(component_id="ticker_dp", component_property="value"),
-        Input(component_id="date_range", component_property="end_date"),
-        Input(component_id="date_range", component_property="start_date"),
+        Input(component_id="visualization_date_range", component_property="end_date"),
+        Input(component_id="visualization_date_range", component_property="start_date"),
         Input(component_id="radio_100", component_property="value"),
         Input(component_id="radio_adjdusted", component_property="value"),
     ],
@@ -314,7 +342,7 @@ def update_my_graph(ticker_list, end_date, start_date, normal_or_100, adjusted_o
 app.clientside_callback(
     """
     function(N) {
-        return "Get best " + String(N) + " tickers js.";
+        return "Get best " + String(N) + " tickers";
     }
     """,
     Output(component_id="get_best_btn", component_property="children"),
@@ -350,7 +378,23 @@ def update_get_n_best_button(n_clicks, N, start_date, end_date, adjustd_or_no):
 
 @app.callback(
     [
-        Output(component_id="date_range_slider", component_property="value"),
+        Output(component_id="visualization_date_range_slider", component_property="value"),
+    ],
+    [
+        Input('apply_dates_to_visualization', 'n_clicks'),
+    ],
+    [
+        State(component_id="d1_date_range_slider", component_property="value"),
+    ],
+    prevent_initial_call=True,
+)
+def apply_best_dates_to_visulization_dates(n_clicks, dates):
+    return [dates]
+
+
+@app.callback(
+    [
+        Output(component_id="d1_date_range_slider", component_property="value"),
     ],
     [
         Input(component_id="d1", component_property="start_date"),
@@ -374,7 +418,7 @@ def digitrange_to_daterange(start_date, end_date):
         Output(component_id="d1", component_property="end_date"),
     ],
     [
-        Input(component_id="date_range_slider", component_property="value"),
+        Input(component_id="d1_date_range_slider", component_property="value"),
     ],
 )
 def daterange_to_digitrange(value):
@@ -384,5 +428,21 @@ def daterange_to_digitrange(value):
     return [values_list.iloc[value[0]]["Date"], values_list.iloc[value[1]]["Date"]]
 
 
+@app.callback(
+    [
+        Output(component_id="visualization_date_range", component_property="start_date"),
+        Output(component_id="visualization_date_range", component_property="end_date"),
+    ],
+    [
+        Input(component_id="visualization_date_range_slider", component_property="value"),
+    ],
+)
+def daterange_to_digitrange(value):
+    print("2")
+    # return [values_list.iloc[value[0]], values_list.iloc[value[1]]]
+    # st()
+    return [values_list.iloc[value[0]]["Date"], values_list.iloc[value[1]]["Date"]]
+
+
 if __name__ == "__main__":
-    app.run_server(debug=False, host="0.0.0.0", port=8050)
+    app.run_server(debug=True, host="0.0.0.0", port=8050)
